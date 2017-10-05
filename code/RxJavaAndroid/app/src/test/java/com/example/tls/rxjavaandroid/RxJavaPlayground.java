@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.observables.ConnectableObservable;
 
 public class RxJavaPlayground {
 
@@ -99,5 +103,87 @@ public class RxJavaPlayground {
         observable.subscribe(value -> System.out.println("Observable[2]" + value), Throwable::printStackTrace);
     }
 
+    @Test
+    public void createHotObserver() {
+        Observable<String> coldSource = Observable.just("Alpha", "Beta", "Gamma", "Delta");
+        ConnectableObservable<String> hotSource = coldSource.publish();
 
+        // Subscribing on hotSource
+        hotSource.subscribe(s -> System.out.println("observer[1]: " + s + ", timestamp: " + System.currentTimeMillis()));
+        hotSource.map(s -> s.length())
+                .subscribe(s -> System.out.println("observer[2]: " + s + ", timestamp: " + System.currentTimeMillis()));
+
+        // Fire the strem
+        hotSource.connect();
+
+        // The stream already done, so it will lost the data
+        hotSource.subscribe(s -> System.out.println("observer[3]: " + s + ", timestamp: " + System.currentTimeMillis()));
+    }
+
+    @Test
+    public void usingColdInterval() throws InterruptedException {
+        // Run on work thread
+        Observable<Long> source = Observable.interval(1, TimeUnit.SECONDS);
+
+        // Subscribe on source data
+        source.subscribe(s -> System.out.println("Observer[0]" + s));
+
+        System.out.println("Stoping the main thread[0]");
+        // Stop the main thread
+        Thread.sleep(5000);
+
+        // Subscribe on source data
+        source.subscribe(s -> System.out.println("Observer[1]" + s));
+
+        System.out.println("Stoping the main thread[1]");
+        // Stop the main thread
+        Thread.sleep(5000);
+    }
+
+    @Test
+    public void usingHotInterval() throws InterruptedException {
+        // Run on work thread
+        ConnectableObservable<Long> hotSource = Observable.interval(1, TimeUnit.SECONDS).publish();
+
+        // Subscribe on hotSource data
+        hotSource.subscribe(s -> System.out.println("Observer[0]" + s));
+
+        System.out.println("Stoping the main thread[0]");
+
+        // connect the stream
+        hotSource.connect();
+
+        // Stop the main thread
+        Thread.sleep(5000);
+
+        // Subscribe on hotSource data
+        hotSource.subscribe(s -> System.out.println("Observer[1]" + s));
+
+        System.out.println("Stoping the main thread[1]");
+        // Stop the main thread
+        Thread.sleep(5000);
+    }
+
+    @Test
+    public void test() throws InterruptedException {
+        Observable<String> coldSource = Observable.create((ObservableOnSubscribe<String>) observableEmitter -> {
+            if (!observableEmitter.isDisposed()) {
+                System.out.println("Executing the stream");
+                observableEmitter.onNext("hello");
+                observableEmitter.onNext("hello2");
+                observableEmitter.onNext("hello3");
+            }
+            observableEmitter.onComplete();
+        });
+
+        Thread.sleep(5000);
+        ;
+
+        System.out.println("--------");
+
+        Thread.sleep(5000);
+        ;
+
+        coldSource.subscribe(System.out::println);
+    }
 }
