@@ -8,6 +8,8 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 
+import static java.lang.Thread.sleep;
+
 public class OperatorsPlayground {
 
     ///////////////////////////////////////////////////////////////////////////
@@ -41,7 +43,7 @@ public class OperatorsPlayground {
                 .take(1, TimeUnit.SECONDS)
                 .subscribe(System.out::println);
 
-        Thread.sleep(5000);
+        sleep(5000);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -53,6 +55,55 @@ public class OperatorsPlayground {
         Observable.range(1, 100)
                 .skip(90)
                 .subscribe(System.out::println);
-        Thread.sleep(3000);
+        sleep(3000);
+    }
+
+    @Test
+    public void usingTakeWhile() throws InterruptedException {
+        Observable.range(1,100)
+                .takeWhile(s -> s < 6)
+                .subscribe(System.out::println);
+        sleep(2000);
+    }
+
+    @Test
+    public void usingDistinct() throws InterruptedException {
+        Observable.just("Lopes", "Hi", "It")
+                .map(String::length)
+                .distinct()
+                .subscribe(System.out::println);
+        sleep(2000);
+    }
+
+    @Test
+    public void usingDistinctWithLambda() throws InterruptedException {
+        Observable.just("Lopes", "Hi", "It")
+                .distinct(String::length)
+                .subscribe(System.out::println);
+        sleep(2000);
+    }
+
+    @Test
+    public void usingElementAt() throws InterruptedException {
+        Observable.range(1,10)
+                .elementAt(1)
+                .subscribe(System.out::println);
+        sleep(2000);
+    }
+
+    @Test
+    public void usingFlatMap() throws InterruptedException {
+        Observable.just("Thiago", "Lopes","da", "Silva")
+                .flatMap(s-> Observable.fromArray(s.split("")))
+                .subscribe(System.out::println);
+        sleep(2000);
+    }
+
+    @Test
+    public void usingOnNext() {
+        Observable.just("Thiago", "Lopes","da", "Silva")
+                .doOnNext(s -> System.out.println("---> Before:: "+s))
+                .doOnComplete(() -> System.out.println("---> onComplete<---"))
+                .subscribe(System.out::println);
     }
 }

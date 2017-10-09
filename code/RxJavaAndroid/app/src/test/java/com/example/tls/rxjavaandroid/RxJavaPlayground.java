@@ -177,7 +177,7 @@ public class RxJavaPlayground {
         });
 
         Thread.sleep(5000);
-        ;
+
 
         System.out.println("--------");
 
